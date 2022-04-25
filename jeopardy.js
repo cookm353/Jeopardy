@@ -1,102 +1,3 @@
-// categories is the main data structure for the app; it looks like this:
-
-//  [
-//    { title: "Math",
-//      clues: [
-//        {question: "2+2", answer: 4, showing: null},
-//        {question: "1+1", answer: 2, showing: null}
-//        ...
-//      ],
-//    },
-//    { title: "Literature",
-//      clues: [
-//        {question: "Hamlet Author", answer: "Shakespeare", showing: null},
-//        {question: "Bell Jar Author", answer: "Plath", showing: null},
-//        ...
-//      ],
-//    },
-//    ...
-//  ]
-
-// let categories = [];
-
-
-/** Get NUM_CATEGORIES random category from API.
- *
- * Returns array of category ids
- */
-
-function getCategoryIds() {
-}
-
-/** Return object with data about a category:
- *
- *  Returns { title: "Math", clues: clue-array }
- *
- * Where clue-array is:
- *   [
- *      {question: "Hamlet Author", answer: "Shakespeare", showing: null},
- *      {question: "Bell Jar Author", answer: "Plath", showing: null},
- *      ...
- *   ]
- */
-
-function getCategory(catId) {
-}
-
-/** Fill the HTML table#jeopardy with the categories & cells for questions.
- *
- * - The <thead> should be filled w/a <tr>, and a <td> for each category
- * - The <tbody> should be filled w/NUM_QUESTIONS_PER_CAT <tr>s,
- *   each with a question for each category in a <td>
- *   (initally, just show a "?" where the question/answer would go.)
- */
-
-async function fillTable() {
-}
-
-/** Handle clicking on a clue: show the question or answer.
- *
- * Uses .showing property on clue to determine what to show:
- * - if currently null, show question & set .showing to "question"
- * - if currently "question", show answer & set .showing to "answer"
- * - if currently "answer", ignore click
- * */
-
-function handleClick(evt) {
-}
-
-/** Wipe the current Jeopardy board, show the loading spinner,
- * and update the button used to fetch data.
- */
-
-function showLoadingView() {
-
-}
-
-/** Remove the loading spinner and update the button used to fetch data. */
-
-function hideLoadingView() {
-}
-
-/** Start game:
- *
- * - get random category Ids
- * - get data for each category
- * - create HTML table
- * */
-
-async function setupAndStart() {
-}
-
-/** On click of start / restart button, set up game. */
-
-// TODO
-
-/** On page load, add event handler for clicking clues */
-
-// TODO
-
 class Board {
 	constructor() {
 		this.$thead = $("thead");
@@ -121,44 +22,38 @@ class Board {
 			this.$tbody.append($tr);
 		}
 	}
+	/** Add category titles to table head */
 	addCategories(categories) {
 		for (let i = 0; i < 6; i++) {
-			$("th").eq(i).text(categories[i].title);
+			const title = categories[i].title;
+			$("th").eq(i).text(title.toUpperCase());
 		}
 	}
+	/** Add clues to table body */
 	addClues(categories) {
 		// Loop thru each tr
 		const $trs = $("tr");
-		console.log(categories[0].clues);
 
 		for (let i = 0; i < $trs.length; i++) {
-			const $tds = $trs.eq(i).children;
 			// Loop thru each category
 			for (let j = 0; j < categories.length; j++) {
-				const td = $tds[j];
+				const $td = $trs.eq(i).children().eq(j)
 				const clues = categories[j].clues
-				// console.log(categories[j])
-				// const {question, answer, showing} = categories[j].clues[i];
-				
-				const clueTile = this.makeClueTile(clues);
+
+				const divs = this.makeClueTile(clues[i], i)
+				$td.append(...divs);
 			}
 		}
-		for(let category of categories) {
-			const clues = category.clues
-			// console.log(typeof clues);
-			for (let [k, v] of Object.entries(clues)) {
-				console.log(`${k}: ${v}`)
-			}
-			// for (let clue of category.clues) {
-			// 	console.log(clue)
-			// }
-		}
+
 	}
-	makeClueTile(clues) {
-		const $div1 = $(`<div class=showing>`)
-		for (let clue of clues) {
-			console.log(clue)
-		}
+	makeClueTile(clue, i) {
+		const { question, answer } = clue;
+		const clueValue = `$${200 + 200*i}`
+		const $div1 = $(`<div class="tile value">${clueValue}</div>`)
+		const $div2 = $(`<div class="tile question">${question}</div>`)
+		const $div3 = $(`<div class="tile answer">${answer}</div>`)
+		
+		return [$div1, $div2, $div3];
 	}
 }
 
@@ -169,22 +64,20 @@ class Category {
 		this.clues = []
 	}
 	/**
-	 * Retrieve 5 random clues from category and store in object
+	 * Retrieve clues and store
 	 */
 	async getClues() {
-		const cluesUrl = `http://jservice.io/api/clues?id=${this.id}`
-		const clueIndices = getRandomIndices(5);
+		const cluesUrl = `https://jservice.io/api/clues?category=${this.id}`
 
 		try {
-			const clues = await axios.get(cluesUrl)
-			for (let i of clueIndices) {
-				const clue = clues.data[i];
+			const cluesResp = await axios.get(cluesUrl)
+			const clues = cluesResp.data
+			clues.map(clue => {
 				this.clues.push({
 					question: clue.question,
-					answer: clue.answer,
-					showing: null
-				});
-			}
+					answer: clue.answer
+				})
+			})
 		} catch {
 			alert("Error: Could not retrieve clues")
 		}
@@ -194,7 +87,7 @@ class Category {
 	 * Retrieve 100 categories from API
 	 */
 	static async getCategories() {
-		const categoriesUrl = `http://jservice.io/api/categories?count=100`;
+		const categoriesUrl = `http://jservice.io/api/categories?count=40`;
 		try {
 			const resp = await axios.get(categoriesUrl);
 			return resp;
@@ -228,18 +121,34 @@ class Game {
 function getRandomIndices(numIndices) {
 	const indices = [];
 	while (indices.length < numIndices) {
-		const index = Math.floor(Math.random() * 100);
+		const index = Math.floor(Math.random() * 40);
 		if (indices.indexOf(index) === -1) {
-			indices.push(index)
+			indices.push(index);
 		}
 	}
-
 	return indices;
+}
+
+/** Capitalize the first letter of each word */
+function toTitleCase(string) {
+	const words = string.split(" ");
+	return words.map(word => newWord = word[0].toUpperCase() 
+		+ word.slice(1)).join(" ");
+}
+
+function removeTile(tile) {
+	if (tile.classList != "tile answer" ) {
+		tile.nextSibling.style.display = "block";
+		tile.remove()
+	}
 }
 
 /** Button to start a new game */
 $("#startGameBttn").on("click", async function(evt) {
-	// evt.preventDefault();
+	
+	$("thead").html("")
+	$("tbody").html("")
+
 	const jeopardy = new Game();
 	
 	// Get 6 random categories
@@ -249,9 +158,24 @@ $("#startGameBttn").on("click", async function(evt) {
 	// Get clues for each category
 	for (let category of categories) {
 		await category.getClues();
-		jeopardy.categories.push(category)
+		jeopardy.categories.push(category);
 	}
 
+	// Make a board then add clues and categories
 	const board = new Board();
 	board.addCategories(jeopardy.categories);
+	board.addClues(jeopardy.categories);
+})
+
+// $("tbody").on("click", ".tile", (evt) => {
+$("tbody, .tile").on("click", "td", (evt) => {
+	if (evt.target.tagName === "TD") {
+		const tiles = evt.target.children;
+		for (let tile of tiles) {
+			removeTile(tile)
+		}
+	} else if (evt.target.tagName === "DIV") {
+		const tile = evt.target;
+		removeTile(tile)
+	}
 })

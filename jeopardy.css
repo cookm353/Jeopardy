@@ -1,7 +1,34 @@
-/* some colors you may find useful:
-  #115ff4
-  #060ce9
-  #28a200
-  #8d2ab5
-  #74119c
-*/
+table {
+  width: 80%;
+}
+
+th, td {
+  background-color: #060ce9;
+  color: white;
+  width: 16.6%;
+  text-align: center;
+}
+
+th {
+  font-weight: bolder;
+  font-size: .9em;
+  height: 60px;
+}
+
+td {
+  height: 130px;
+}
+
+.tile {
+  width: 80%;
+  margin: auto;
+  display: block;
+}
+
+.value {
+  font-size: 1.5em;
+}
+
+.question, .answer {
+  display: none;
+}
