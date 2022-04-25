@@ -18,7 +18,7 @@
 //    ...
 //  ]
 
-let categories = [];
+// let categories = [];
 
 
 /** Get NUM_CATEGORIES random category from API.
@@ -202,16 +202,18 @@ class Category {
 			alert("Error: could not retrieve categories");
 		}
 	}
-	static pickRandomCategories(categoriesResp, indices){
-		for (let i of indices) {
+	/**
+	 * Pick 6 random categories
+	 */
+	static pickRandomCategories(categoriesResp){
+		const indices = getRandomIndices(6);
+
+		return indices.map(i => {
 			const id = categoriesResp.data[i].id;
 			const title = categoriesResp.data[i].title;
-			// console.log(id, title)
 			const category = new Category(id, title);
-			categories.push(category)
-		}
-
-		return categories;
+			return category
+		})
 	}
 }
 
@@ -240,33 +242,16 @@ $("#startGameBttn").on("click", async function(evt) {
 	// evt.preventDefault();
 	const jeopardy = new Game();
 	
+	// Get 6 random categories
 	const categoriesResp = await Category.getCategories();	
-	const categoryIndices = getRandomIndices(6);
-	jeopardy.categories =  Category.pickRandomCategories(categoriesResp,
-		categoryIndices);
+	const categories = Category.pickRandomCategories(categoriesResp);
 
-	for ( let category of categories ) {
-		category.getClues();
+	// Get clues for each category
+	for (let category of categories) {
+		await category.getClues();
+		jeopardy.categories.push(category)
 	}
-	
+
 	const board = new Board();
 	board.addCategories(jeopardy.categories);
-
-	for (let category of categories) {
-		console.log(category.clues[0])
-	}
-	
-	
-	/*
-	// Randomly select 6 categories
-	const categoriesResp = await Category.getCategories();	
-	const categoryIndices = getRandomIndices();
-	jeopardy.categories = Category.pickRandomCategories(categoriesResp, categoryIndices);
-	
-	// Retrieve clues for each category and add to category object
-	for ( let category of categories ) {
-		category.getClues();
-	}
-	*/
 })
-
